@@ -455,6 +455,8 @@ public class Global
         "stream-one"
     ];
 
+    public static readonly List<string> XdriveServices = ["google-drive", "s3", "local"];
+
     public static readonly List<string> DomainStrategy =
     [
         "AsIs",

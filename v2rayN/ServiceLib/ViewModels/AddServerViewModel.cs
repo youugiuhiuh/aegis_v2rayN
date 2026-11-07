@@ -148,6 +148,30 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
     [Reactive]
     public partial int? KcpMtu { get; set; }
 
+    [Reactive]
+    public partial string XdriveService { get; set; }
+
+    [Reactive]
+    public partial string XdriveRemoteFolder { get; set; }
+
+    [Reactive]
+    public partial string XdriveSecrets { get; set; }
+
+    [Reactive]
+    public partial string XdriveS3Endpoint { get; set; }
+
+    [Reactive]
+    public partial string XdriveS3Region { get; set; }
+
+    [Reactive]
+    public partial string XdriveS3Bucket { get; set; }
+
+    [Reactive]
+    public partial bool? XdriveS3PathStyle { get; set; }
+
+    [Reactive]
+    public partial string XdriveExtra { get; set; }
+
     public string TransportHeaderType
     {
         get => SelectedSource.GetNetwork() switch
@@ -156,6 +180,7 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
             nameof(ETransport.kcp) => KcpHeaderType,
             nameof(ETransport.xhttp) => XhttpMode,
             nameof(ETransport.grpc) => GrpcMode,
+            nameof(ETransport.xdrive) => XdriveService,
             _ => string.Empty,
         };
         set
@@ -177,6 +202,10 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
                 case nameof(ETransport.grpc):
                     GrpcMode = value;
                     break;
+
+                case nameof(ETransport.xdrive):
+                    XdriveService = value;
+                    break;
             }
             this.RaisePropertyChanged();
         }
@@ -191,6 +220,7 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
             nameof(ETransport.httpupgrade) => Host,
             nameof(ETransport.xhttp) => Host,
             nameof(ETransport.grpc) => GrpcAuthority,
+            nameof(ETransport.xdrive) => XdriveS3Endpoint,
             _ => string.Empty,
         };
         set
@@ -207,6 +237,10 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
                 case nameof(ETransport.grpc):
                     GrpcAuthority = value;
                     break;
+
+                case nameof(ETransport.xdrive):
+                    XdriveS3Endpoint = value;
+                    break;
             }
             this.RaisePropertyChanged();
         }
@@ -221,6 +255,7 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
             nameof(ETransport.httpupgrade) => Path,
             nameof(ETransport.xhttp) => Path,
             nameof(ETransport.grpc) => GrpcServiceName,
+            nameof(ETransport.xdrive) => XdriveRemoteFolder,
             _ => string.Empty,
         };
         set
@@ -240,6 +275,10 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
                 case nameof(ETransport.grpc):
                     GrpcServiceName = value;
                     break;
+
+                case nameof(ETransport.xdrive):
+                    XdriveRemoteFolder = value;
+                    break;
             }
             this.RaisePropertyChanged();
         }
@@ -247,14 +286,23 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
 
     public string TransportExtraText
     {
-        get => SelectedSource.GetNetwork() == nameof(ETransport.xhttp)
-            ? XhttpExtra
-            : string.Empty;
+        get => SelectedSource.GetNetwork() switch
+        {
+            nameof(ETransport.xhttp) => XhttpExtra,
+            nameof(ETransport.xdrive) => XdriveExtra,
+            _ => string.Empty,
+        };
         set
         {
-            if (SelectedSource.GetNetwork() == nameof(ETransport.xhttp))
+            switch (SelectedSource.GetNetwork())
             {
-                XhttpExtra = value;
+                case nameof(ETransport.xhttp):
+                    XhttpExtra = value;
+                    break;
+
+                case nameof(ETransport.xdrive):
+                    XdriveExtra = value;
+                    break;
             }
             this.RaisePropertyChanged();
         }
@@ -287,8 +335,12 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
             .Subscribe(_ => UpdateCertTip());
 
         this.WhenAnyValue(x => x.Network)
-            .Subscribe(_ =>
+            .Subscribe(network =>
             {
+                if (SelectedSource != null && !network.IsNullOrEmpty())
+                {
+                    SelectedSource.Network = network;
+                }
                 this.RaisePropertyChanged(nameof(TransportHeaderType));
                 this.RaisePropertyChanged(nameof(TransportHost));
                 this.RaisePropertyChanged(nameof(TransportPath));
@@ -358,6 +410,14 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
         KcpHeaderType = transport.KcpHeaderType.IsNullOrEmpty() ? Global.None : transport.KcpHeaderType;
         KcpSeed = transport.KcpSeed ?? string.Empty;
         KcpMtu = transport.KcpMtu;
+        XdriveService = transport.XdriveService.IsNullOrEmpty() ? (Global.XdriveServices.FirstOrDefault() ?? "google-drive") : transport.XdriveService;
+        XdriveRemoteFolder = transport.XdriveRemoteFolder ?? string.Empty;
+        XdriveSecrets = transport.XdriveSecrets ?? string.Empty;
+        XdriveS3Endpoint = transport.XdriveS3Endpoint ?? string.Empty;
+        XdriveS3Region = transport.XdriveS3Region ?? string.Empty;
+        XdriveS3Bucket = transport.XdriveS3Bucket ?? string.Empty;
+        XdriveS3PathStyle = transport.XdriveS3PathStyle;
+        XdriveExtra = transport.XdriveExtra ?? string.Empty;
     }
 
     private async Task SaveServerAsync()
@@ -440,6 +500,14 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
             KcpHeaderType = KcpHeaderType.NullIfEmpty(),
             KcpSeed = KcpSeed.NullIfEmpty(),
             KcpMtu = KcpMtu > 0 ? KcpMtu : null,
+            XdriveService = XdriveService.NullIfEmpty(),
+            XdriveRemoteFolder = XdriveRemoteFolder.NullIfEmpty(),
+            XdriveSecrets = XdriveSecrets.NullIfEmpty(),
+            XdriveS3Endpoint = XdriveS3Endpoint.NullIfEmpty(),
+            XdriveS3Region = XdriveS3Region.NullIfEmpty(),
+            XdriveS3Bucket = XdriveS3Bucket.NullIfEmpty(),
+            XdriveS3PathStyle = XdriveS3PathStyle,
+            XdriveExtra = XdriveExtra.NullIfEmpty(),
         };
 
         SelectedSource.SetProtocolExtra(SelectedSource.GetProtocolExtra() with
@@ -582,6 +650,7 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
             nameof(ETransport.httpupgrade) => Host,
             nameof(ETransport.xhttp) => Host,
             nameof(ETransport.grpc) => GrpcAuthority,
+            nameof(ETransport.xdrive) => XdriveS3Endpoint,
             _ => string.Empty,
         };
     }
