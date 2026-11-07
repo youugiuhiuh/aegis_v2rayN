@@ -1,0 +1,19 @@
+{
+  "migrated_version": "3.0.0",
+  "finalized": false,
+  "appliedAt": "2026-11-07T02:20:05.364Z",
+  "log": [
+    {
+      "action": "skipped:missing",
+      "from": "/home/ub/Dark/v2rayN-feat-xdrive/.unipi/config/compactor.json"
+    },
+    {
+      "action": "skipped:missing",
+      "from": "/home/ub/Dark/v2rayN-feat-xdrive/.unipi/fusion-preset.json"
+    },
+    {
+      "action": "skipped:missing",
+      "from": "/home/ub/Dark/v2rayN-feat-xdrive/.unipi/config/background-tasks.json"
+    }
+  ]
+}

@@ -336,7 +336,8 @@ public class Global
         "kcp",
         "grpc",
         "ws",
-        "httpupgrade"
+        "httpupgrade",
+        "xdrive"
     ];
 
     public static readonly List<string> KcpHeaderTypes =
