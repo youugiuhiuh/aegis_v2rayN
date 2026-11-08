@@ -559,4 +559,163 @@ public class FmtHandlerTests
 
         return item;
     }
+
+    [Test]
+    public async Task ResolveConfig_Xdrive_GoogleDrive_ShouldParseAllFields()
+    {
+        var uri = "vless://11111111-2222-3333-4444-555555555555@www.google.com:443?type=xdrive&service=google-drive&remoteFolder=test_folder&encryption=test_enc_key&security=tls&sni=www.google.com&alpn=h2&mux=true&secrets=gdrive_token#Aegis-GDrive";
+
+        var item = FmtHandler.ResolveConfig(uri, out var msg);
+
+        await item.Should().NotBeNull();
+        await msg.Should().BeEmpty();
+        await item!.ConfigType.Should().BeEqualTo(EConfigType.VLESS);
+        await item.Address.Should().BeEqualTo("www.google.com");
+        await item.Port.Should().BeEqualTo(443);
+        await item.Password.Should().BeEqualTo("11111111-2222-3333-4444-555555555555");
+        await item.Remarks.Should().BeEqualTo("Aegis-GDrive");
+        await item.Network.Should().BeEqualTo(nameof(ETransport.xdrive));
+        await item.StreamSecurity.Should().BeEqualTo(Global.StreamSecurity);
+        await item.Sni.Should().BeEqualTo("www.google.com");
+        await item.Alpn.Should().BeEqualTo("h2");
+        await item.MuxEnabled.Should().BeEqualTo(true);
+        await item.GetProtocolExtra().VlessEncryption.Should().BeEqualTo("test_enc_key");
+
+        var transport = item.GetTransportExtra();
+        await transport.XdriveService.Should().BeEqualTo("google-drive");
+        await transport.XdriveRemoteFolder.Should().BeEqualTo("test_folder");
+        await transport.XdriveSecrets.Should().BeEqualTo("gdrive_token");
+    }
+
+    [Test]
+    public async Task ResolveConfig_Xdrive_S3_ShouldParseAllFields()
+    {
+        var uri = "vless://11111111-2222-3333-4444-555555555555@127.0.0.1:10080?type=xdrive&service=s3&remoteFolder=r2_folder&encryption=test_enc_key&mux=true&endpoint=https%3A%2F%2Faccount.r2.cloudflarestorage.com&bucket=mybucket&region=auto&pathStyle=false&secrets=ak123%2Csk456#Aegis-R2";
+
+        var item = FmtHandler.ResolveConfig(uri, out var msg);
+
+        await item.Should().NotBeNull();
+        await msg.Should().BeEmpty();
+        await item!.ConfigType.Should().BeEqualTo(EConfigType.VLESS);
+        await item.Address.Should().BeEqualTo("127.0.0.1");
+        await item.Port.Should().BeEqualTo(10080);
+        await item.Password.Should().BeEqualTo("11111111-2222-3333-4444-555555555555");
+        await item.Remarks.Should().BeEqualTo("Aegis-R2");
+        await item.Network.Should().BeEqualTo(nameof(ETransport.xdrive));
+        await item.MuxEnabled.Should().BeEqualTo(true);
+        await item.GetProtocolExtra().VlessEncryption.Should().BeEqualTo("test_enc_key");
+
+        var transport = item.GetTransportExtra();
+        await transport.XdriveService.Should().BeEqualTo("s3");
+        await transport.XdriveRemoteFolder.Should().BeEqualTo("r2_folder");
+        await transport.XdriveS3Endpoint.Should().BeEqualTo("https://account.r2.cloudflarestorage.com");
+        await transport.XdriveS3Bucket.Should().BeEqualTo("mybucket");
+        await transport.XdriveS3Region.Should().BeEqualTo("auto");
+        await transport.XdriveS3PathStyle.Should().BeEqualTo(false);
+        await transport.XdriveSecrets.Should().BeEqualTo("ak123,sk456");
+    }
+
+    [Test]
+    public async Task GetShareUri_Xdrive_ShouldRoundTrip()
+    {
+        var source = new ProfileItem
+        {
+            ConfigType = EConfigType.VLESS,
+            Address = "127.0.0.1",
+            Port = 10080,
+            Password = "11111111-2222-3333-4444-555555555555",
+            Remarks = "Xdrive RoundTrip",
+            Network = nameof(ETransport.xdrive),
+            MuxEnabled = true,
+        };
+        source.SetProtocolExtra(new ProtocolExtraItem
+        {
+            VlessEncryption = "0123456789abcdef0123456789abcdef",
+        });
+        source.SetTransportExtra(new TransportExtraItem
+        {
+            XdriveService = "s3",
+            XdriveRemoteFolder = "my_folder",
+            XdriveSecrets = "AK_TEST,SK_TEST",
+            XdriveS3Endpoint = "https://s3.example.com",
+            XdriveS3Region = "us-east-1",
+            XdriveS3Bucket = "testbucket",
+            XdriveS3PathStyle = true,
+        });
+
+        var uri = FmtHandler.GetShareUri(source);
+        await uri.Should().NotBeNull();
+        await uri.Should().NotBeEmpty();
+
+        var resolved = FmtHandler.ResolveConfig(uri!, out var msg);
+        await resolved.Should().NotBeNull();
+        await msg.Should().BeEmpty();
+        await resolved!.Address.Should().BeEqualTo(source.Address);
+        await resolved.Port.Should().BeEqualTo(source.Port);
+        await resolved.Password.Should().BeEqualTo(source.Password);
+        await resolved.Remarks.Should().BeEqualTo(source.Remarks);
+        await resolved.Network.Should().BeEqualTo(nameof(ETransport.xdrive));
+        await resolved.MuxEnabled.Should().BeEqualTo(true);
+        await resolved.GetProtocolExtra().VlessEncryption.Should().BeEqualTo("0123456789abcdef0123456789abcdef");
+
+        var transport = resolved.GetTransportExtra();
+        await transport.XdriveService.Should().BeEqualTo("s3");
+        await transport.XdriveRemoteFolder.Should().BeEqualTo("my_folder");
+        await transport.XdriveSecrets.Should().BeEqualTo("AK_TEST,SK_TEST");
+        await transport.XdriveS3Endpoint.Should().BeEqualTo("https://s3.example.com");
+        await transport.XdriveS3Region.Should().BeEqualTo("us-east-1");
+        await transport.XdriveS3Bucket.Should().BeEqualTo("testbucket");
+        await transport.XdriveS3PathStyle.Should().BeEqualTo(true);
+    }
+
+    [Test]
+    public async Task GetShareUri_Xdrive_GoogleDrive_ShouldRoundTrip()
+    {
+        var source = new ProfileItem
+        {
+            ConfigType = EConfigType.VLESS,
+            Address = "www.google.com",
+            Port = 443,
+            Password = "11111111-2222-3333-4444-555555555555",
+            Remarks = "Google Drive RoundTrip",
+            Network = nameof(ETransport.xdrive),
+            StreamSecurity = Global.StreamSecurity,
+            Sni = "www.google.com",
+            Alpn = "h2",
+            MuxEnabled = true,
+        };
+        source.SetProtocolExtra(new ProtocolExtraItem
+        {
+            VlessEncryption = "0123456789abcdef0123456789abcdef",
+        });
+        source.SetTransportExtra(new TransportExtraItem
+        {
+            XdriveService = "google-drive",
+            XdriveRemoteFolder = "my_gdrive_folder",
+            XdriveSecrets = "token_abc_123",
+        });
+
+        var uri = FmtHandler.GetShareUri(source);
+        await uri.Should().NotBeNull();
+        await uri.Should().NotBeEmpty();
+
+        var resolved = FmtHandler.ResolveConfig(uri!, out var msg);
+        await resolved.Should().NotBeNull();
+        await msg.Should().BeEmpty();
+        await resolved!.Address.Should().BeEqualTo("www.google.com");
+        await resolved.Port.Should().BeEqualTo(443);
+        await resolved.Password.Should().BeEqualTo(source.Password);
+        await resolved.Remarks.Should().BeEqualTo(source.Remarks);
+        await resolved.Network.Should().BeEqualTo(nameof(ETransport.xdrive));
+        await resolved.StreamSecurity.Should().BeEqualTo(Global.StreamSecurity);
+        await resolved.Sni.Should().BeEqualTo("www.google.com");
+        await resolved.Alpn.Should().BeEqualTo("h2");
+        await resolved.MuxEnabled.Should().BeEqualTo(true);
+        await resolved.GetProtocolExtra().VlessEncryption.Should().BeEqualTo("0123456789abcdef0123456789abcdef");
+
+        var transport = resolved.GetTransportExtra();
+        await transport.XdriveService.Should().BeEqualTo("google-drive");
+        await transport.XdriveRemoteFolder.Should().BeEqualTo("my_gdrive_folder");
+        await transport.XdriveSecrets.Should().BeEqualTo("token_abc_123");
+    }
 }
