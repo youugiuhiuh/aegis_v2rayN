@@ -31,6 +31,7 @@ public class VLESSFmt : BaseFmt
         item.StreamSecurity = GetQueryValue(query, "security");
         ResolveUriQuery(query, ref item);
 
+        msg = string.Empty;
         return item;
     }
 
