@@ -166,6 +166,45 @@ public class BaseFmt
                     }
                 }
                 break;
+
+            case nameof(ETransport.xdrive):
+                if (transport.XdriveService.IsNotEmpty())
+                {
+                    dicQuery.Add("service", UrlEncodeSafe(transport.XdriveService));
+                }
+                if (transport.XdriveRemoteFolder.IsNotEmpty())
+                {
+                    dicQuery.Add("remoteFolder", UrlEncodeSafe(transport.XdriveRemoteFolder));
+                }
+                if (transport.XdriveSecrets.IsNotEmpty())
+                {
+                    dicQuery.Add("secrets", UrlEncodeSafe(transport.XdriveSecrets));
+                }
+                if (transport.XdriveS3Endpoint.IsNotEmpty())
+                {
+                    dicQuery.Add("endpoint", UrlEncodeSafe(transport.XdriveS3Endpoint));
+                }
+                if (transport.XdriveS3Region.IsNotEmpty())
+                {
+                    dicQuery.Add("region", UrlEncodeSafe(transport.XdriveS3Region));
+                }
+                if (transport.XdriveS3Bucket.IsNotEmpty())
+                {
+                    dicQuery.Add("bucket", UrlEncodeSafe(transport.XdriveS3Bucket));
+                }
+                if (transport.XdriveS3PathStyle != null)
+                {
+                    dicQuery.Add("pathStyle", transport.XdriveS3PathStyle.ToString()!.ToLowerInvariant());
+                }
+                if (transport.XdriveExtra.IsNotEmpty())
+                {
+                    dicQuery.Add("extra", UrlEncodeSafe(transport.XdriveExtra));
+                }
+                if (item.MuxEnabled == true)
+                {
+                    dicQuery.Add("mux", "true");
+                }
+                break;
         }
         return 0;
     }
@@ -283,6 +322,27 @@ public class BaseFmt
                     GrpcServiceName = GetQueryDecoded(query, "serviceName"),
                     GrpcMode = GetQueryDecoded(query, "mode", Global.GrpcGunMode),
                 };
+                break;
+
+            case nameof(ETransport.xdrive):
+                var pathStyleStr = GetQueryValue(query, "pathStyle");
+                bool? pathStyle = bool.TryParse(pathStyleStr, out var ps) ? ps : null;
+                transport = transport with
+                {
+                    XdriveService = GetQueryDecoded(query, "service"),
+                    XdriveRemoteFolder = GetQueryDecoded(query, "remoteFolder"),
+                    XdriveSecrets = GetQueryDecoded(query, "secrets"),
+                    XdriveS3Endpoint = GetQueryDecoded(query, "endpoint"),
+                    XdriveS3Region = GetQueryDecoded(query, "region"),
+                    XdriveS3Bucket = GetQueryDecoded(query, "bucket"),
+                    XdriveS3PathStyle = pathStyle,
+                    XdriveExtra = GetQueryDecoded(query, "extra"),
+                };
+                var muxStr = GetQueryValue(query, "mux");
+                if (string.Equals(muxStr, "true", StringComparison.OrdinalIgnoreCase) || muxStr == "1")
+                {
+                    item.MuxEnabled = true;
+                }
                 break;
 
             default:
