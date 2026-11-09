@@ -1,17 +1,22 @@
-# v2rayN
+# aegis_v2rayN
 
-### A GUI client for Windows, Linux and macOS. Support [Xray](https://github.com/XTLS/Xray-core) and [sing-box](https://github.com/SagerNet/sing-box) and [others](https://github.com/2dust/v2rayN/wiki/List-of-supported-cores)
+### A customized GUI client for Windows, Linux, and macOS with native [XDRIVE](https://github.com/XTLS/Xray-core) object storage relay support. Based on [v2rayN](https://github.com/2dust/v2rayN).
 
-[![CodeFactor](https://www.codefactor.io/repository/github/2dust/v2rayn/badge)](https://www.codefactor.io/repository/github/2dust/v2rayn)
-[![Release](https://img.shields.io/github/v/release/2dust/v2rayN?logo=github&label=Release)](https://github.com/2dust/v2rayN/releases)
-[![Downloads](https://img.shields.io/github/downloads/2dust/v2rayN/latest/total?logo=github&label=Downloads)](https://github.com/2dust/v2rayN/releases)
-[![Telegram](https://img.shields.io/badge/Telegram-Chat-26A5E4?logo=telegram)](https://t.me/v2rayn)
- 
-[![Windows](https://img.shields.io/badge/Windows-supported-0078D6?logo=windows)](https://github.com/2dust/v2rayN) 
-[![Linux](https://img.shields.io/badge/Linux-supported-FCC624?logo=linux&logoColor=000)](https://github.com/2dust/v2rayN) 
-[![macOS](https://img.shields.io/badge/macOS-supported-000000?logo=apple)](https://github.com/2dust/v2rayN) 
-[![GPG Signed](https://img.shields.io/badge/GPG-signed-4B32C3?logo=gnuprivacyguard)](https://github.com/2dust/v2rayN)
+[![Release](https://img.shields.io/github/v/release/youugiuhiuh/aegis_v2rayN?logo=github&label=Release)](https://github.com/youugiuhiuh/aegis_v2rayN/releases)
+[![Windows](https://img.shields.io/badge/Windows-supported-0078D6?logo=windows)](https://github.com/youugiuhiuh/aegis_v2rayN)
+[![Linux](https://img.shields.io/badge/Linux-supported-FCC624?logo=linux&logoColor=000)](https://github.com/youugiuhiuh/aegis_v2rayN)
+[![macOS](https://img.shields.io/badge/macOS-supported-000000?logo=apple)](https://github.com/youugiuhiuh/aegis_v2rayN)
+[![GPG Signed](https://img.shields.io/badge/GPG-signed-4B32C3?logo=gnuprivacyguard)](https://github.com/youugiuhiuh/aegis_v2rayN)
 
+---
+
+## Highlights / 特性亮点
+
+- **Native XDRIVE Object Storage Relay / 原生 XDRIVE 存储中继**：
+  - Native GUI configuration for Xray-core's `xdrive` transport (Google Drive, Cloudflare R2, AWS S3, Yandex Cloud S3, ArvanCloud S3, Custom S3).
+  - Full clipboard share link import & export compatibility with Aegis server.
+  - Automatic Mux enforcement and Google Drive performance parameter tuning.
+- **Cross-Platform / 跨平台支持**：Windows (WPF & Avalonia UI), Linux, macOS.
 
 ---
 
@@ -21,24 +26,7 @@ Download the latest release here:
 
 在这里下载最新版本：
 
-[https://github.com/2dust/v2rayN/releases](https://github.com/2dust/v2rayN/releases)
-
-
-> [!TIP]
-> v2rayN is the desktop version. For the mobile version, please visit the v2rayNG \
-> v2rayN 是电脑版，手机版请访问 v2rayNG
->
-> https://github.com/2dust/v2rayNG
-
----
-
-## Documentation / 使用文档
-
-Read the Wiki for usage guides and configuration details.
-
-请阅读 Wiki 获取使用说明和配置教程。
-
-[https://github.com/2dust/v2rayN/wiki](https://github.com/2dust/v2rayN/wiki)
+[https://github.com/youugiuhiuh/aegis_v2rayN/releases](https://github.com/youugiuhiuh/aegis_v2rayN/releases)
 
 ---
 
@@ -49,8 +37,6 @@ Read the Wiki for usage guides and configuration details.
 | Windows | ✅ | ✅ | ✅ | - | - | - |
 | Linux | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | macOS | ✅ | - | ✅ | - | - | - |
-
-Minimum OS requirements: [Release files introduction](https://github.com/2dust/v2rayN/wiki/Release-files-introduction) / 最低系统要求：[发布文件介绍](https://github.com/2dust/v2rayN/wiki/Release-files-introduction)
 
 ---
 
@@ -63,18 +49,5 @@ Release files are signed with GPG to verify authenticity and integrity, helping 
 ### Fingerprint / 公钥指纹
 
 ```text
-7694 5E9F 3E9A 168F 8070 F195 805D 661C
-134D FAF6 8903 C199 463C 31E5 AE90 3AE0
+3C6E F969 8F64 9F1D 292B  AABC 524D 6BFB 9760 6EAB
 ```
-
----
-
-## Community / 社区
-
-Telegram Group / Telegram 群组：
-
-[https://t.me/v2rayN](https://t.me/v2rayN)
-
-Telegram Channel / Telegram 频道：
-
-[https://t.me/github_2dust](https://t.me/github_2dust)
