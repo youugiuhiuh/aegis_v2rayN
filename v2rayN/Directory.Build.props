@@ -10,9 +10,11 @@
         <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
         <Nullable>annotations</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Authors>2dust</Authors>
+        <Authors>Aegis Team</Authors>
+        <Product>aegis_v2rayN</Product>
+        <Description>aegis_v2rayN: A specialized GUI client for Xray-core with native XDRIVE support</Description>
         <PackageLicenseExpression>GPL-3.0</PackageLicenseExpression>
-        <Copyright>Copyright © 2017-$([System.DateTime]::UtcNow.Year) $(Authors)</Copyright>
+        <Copyright>Copyright © 2017-$([System.DateTime]::UtcNow.Year) Aegis Team</Copyright>
         <InvariantGlobalization>false</InvariantGlobalization>
     </PropertyGroup>
 
