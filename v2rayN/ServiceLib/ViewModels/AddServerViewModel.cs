@@ -665,6 +665,8 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
                 XdriveService = "s3";
                 if (XdriveS3Region.IsNullOrEmpty() || XdriveS3Region == "auto") XdriveS3Region = "us-west-004";
                 XdriveS3PathStyle = false;
+                if (XdriveExtra.IsNullOrEmpty())
+                    XdriveExtra = "{\"concurrency\":4,\"flushIntervalMs\":100,\"maxPollIntervalMs\":3000,\"pollIntervalMs\":500,\"segmentBytes\":524288,\"eagerWindowMs\":1500}";
                 break;
             case "Yandex Cloud S3":
                 XdriveService = "s3";
