@@ -453,6 +453,14 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
         {
             XdriveProvider = "ArvanCloud S3";
         }
+        else if (transport.XdriveS3Endpoint?.Contains("oraclecloud.com") == true)
+        {
+            XdriveProvider = "Oracle Cloud S3";
+        }
+        else if (transport.XdriveS3Endpoint?.Contains("backblazeb2.com") == true)
+        {
+            XdriveProvider = "Backblaze B2";
+        }
         else if (SelectedSource.Remarks?.Contains("Cloudflare", StringComparison.OrdinalIgnoreCase) == true
                  || (transport.XdriveS3PathStyle == true && transport.XdriveS3Region == "auto"))
         {
@@ -630,6 +638,16 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
             case "AWS S3 (Global)":
                 XdriveService = "s3";
                 if (XdriveS3Region.IsNullOrEmpty()) XdriveS3Region = "ap-northeast-1";
+                XdriveS3PathStyle = false;
+                break;
+            case "Oracle Cloud S3":
+                XdriveService = "s3";
+                if (XdriveS3Region.IsNullOrEmpty() || XdriveS3Region == "auto") XdriveS3Region = "ap-chuncheon-1";
+                XdriveS3PathStyle = true;
+                break;
+            case "Backblaze B2":
+                XdriveService = "s3";
+                if (XdriveS3Region.IsNullOrEmpty() || XdriveS3Region == "auto") XdriveS3Region = "us-west-004";
                 XdriveS3PathStyle = false;
                 break;
             case "Yandex Cloud S3":

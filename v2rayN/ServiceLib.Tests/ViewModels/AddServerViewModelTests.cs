@@ -150,6 +150,35 @@ public class AddServerViewModelTests
     }
 
     [Test]
+    public async Task AddServerViewModel_ApplyXdriveProviderPreset_ShouldConfigureOracleAndB2()
+    {
+        CoreConfigTestFactory.BindAppManagerConfig(CoreConfigTestFactory.CreateConfig());
+
+        var profile = new ProfileItem
+        {
+            IndexId = "test-node",
+            ConfigType = EConfigType.VLESS,
+            Address = "example.com",
+            Port = 443,
+            Password = Guid.NewGuid().ToString(),
+            Network = nameof(ETransport.xdrive),
+        };
+
+        var vm = new AddServerViewModel(profile);
+
+        vm.XdriveProvider = "Oracle Cloud S3";
+        await vm.XdriveService.Should().BeEqualTo("s3");
+        await vm.XdriveS3Region.Should().BeEqualTo("ap-chuncheon-1");
+        await vm.XdriveS3PathStyle.Should().BeEqualTo(true);
+
+        vm.XdriveS3Region = string.Empty;
+        vm.XdriveProvider = "Backblaze B2";
+        await vm.XdriveService.Should().BeEqualTo("s3");
+        await vm.XdriveS3Region.Should().BeEqualTo("us-west-004");
+        await vm.XdriveS3PathStyle.Should().BeEqualTo(false);
+    }
+
+    [Test]
     public async Task Localization_ShouldProvideXdriveStrings()
     {
         await ResUI.XdriveService.IsNotEmpty().Should().BeTrue();
