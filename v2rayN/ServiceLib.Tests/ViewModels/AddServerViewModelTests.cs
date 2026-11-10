@@ -204,7 +204,7 @@ public class AddServerViewModelTests
         await vm.XdriveService.Should().BeEqualTo("s3");
         await vm.XdriveS3Region.Should().BeEqualTo("auto");
         await vm.XdriveS3PathStyle.Should().BeEqualTo(true);
-        await vm.XdriveExtra.Should().BeEqualTo("{\"concurrency\":64,\"flushIntervalMs\":10,\"maxPollIntervalMs\":120,\"segmentBytes\":262144,\"eagerWindowMs\":1000}");
+        await vm.XdriveExtra.Should().BeEqualTo("{\"concurrency\":16,\"flushIntervalMs\":30,\"maxPollIntervalMs\":400,\"segmentBytes\":524288,\"eagerWindowMs\":1500}");
     }
 
     [Test]
