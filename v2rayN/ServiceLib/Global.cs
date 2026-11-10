@@ -463,6 +463,8 @@ public class Global
         "Cloudflare R2",
         "Google Drive",
         "AWS S3 (Global)",
+        "Oracle Cloud S3",
+        "Backblaze B2",
         "Yandex Cloud S3",
         "ArvanCloud S3",
         "Custom S3"
