@@ -1,3 +1,4 @@
+using Avalonia.Media;
 using Semi.Avalonia;
 
 namespace v2rayN.Desktop.ViewModels;
@@ -112,14 +113,11 @@ public partial class ThemeSettingViewModel : MyReactiveObject
     private void ModifyFontFamily()
     {
         var currentFontFamily = _config.UiItem.CurrentFontFamily;
-        if (currentFontFamily.IsNullOrEmpty())
-        {
-            return;
-        }
-
         try
         {
-            Application.Current!.Resources["AppFontFamily"] = currentFontFamily;
+            Application.Current!.Resources["AppFontFamily"] = currentFontFamily.IsNullOrEmpty()
+                ? FontFamily.Default
+                : new FontFamily(currentFontFamily);
         }
         catch (Exception ex)
         {
