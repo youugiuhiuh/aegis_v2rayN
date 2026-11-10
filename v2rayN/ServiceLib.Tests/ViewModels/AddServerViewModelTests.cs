@@ -179,6 +179,35 @@ public class AddServerViewModelTests
     }
 
     [Test]
+    public async Task AddServerViewModel_ApplyXdriveProviderPreset_ShouldConfigureCloudflareR2TuningParameters()
+    {
+        CoreConfigTestFactory.BindAppManagerConfig(CoreConfigTestFactory.CreateConfig());
+
+        var profile = new ProfileItem
+        {
+            IndexId = "test-node",
+            ConfigType = EConfigType.VLESS,
+            Address = "example.com",
+            Port = 443,
+            Password = Guid.NewGuid().ToString(),
+            Network = nameof(ETransport.xdrive),
+        };
+        profile.SetTransportExtra(new TransportExtraItem
+        {
+            XdriveService = "google-drive",
+        });
+
+        var vm = new AddServerViewModel(profile);
+        await vm.XdriveExtra.Should().BeEmpty();
+
+        vm.XdriveProvider = "Cloudflare R2";
+        await vm.XdriveService.Should().BeEqualTo("s3");
+        await vm.XdriveS3Region.Should().BeEqualTo("auto");
+        await vm.XdriveS3PathStyle.Should().BeEqualTo(true);
+        await vm.XdriveExtra.Should().BeEqualTo("{\"concurrency\":64,\"flushIntervalMs\":10,\"maxPollIntervalMs\":120,\"segmentBytes\":262144,\"eagerWindowMs\":1000}");
+    }
+
+    [Test]
     public async Task Localization_ShouldProvideXdriveStrings()
     {
         await ResUI.XdriveService.IsNotEmpty().Should().BeTrue();
