@@ -576,12 +576,27 @@ public partial class CoreConfigV2rayService
 
                     if (string.Equals(transport.XdriveService, "onedrive", StringComparison.OrdinalIgnoreCase))
                     {
-                        xdriveSettings.segmentBytes ??= 524288;
-                        xdriveSettings.flushIntervalMs ??= 10;
-                        xdriveSettings.pollIntervalMs ??= 50;
-                        xdriveSettings.maxPollIntervalMs ??= 300;
-                        xdriveSettings.eagerWindowMs ??= 10000;
-                        xdriveSettings.concurrency ??= 8;
+                        xdriveSettings.service = "template";
+                        xdriveSettings.segmentBytes ??= 65536;
+                        xdriveSettings.flushIntervalMs ??= 80;
+                        xdriveSettings.pollIntervalMs ??= 200;
+                        xdriveSettings.maxPollIntervalMs ??= 1200;
+                        xdriveSettings.eagerWindowMs ??= 2000;
+                        xdriveSettings.concurrency ??= 4;
+
+                        if (xdriveSettings.secrets != null)
+                        {
+                            if (xdriveSettings.secrets.Count == 1)
+                            {
+                                xdriveSettings.secrets = [Global.OneDriveDefaultClientId, Global.OneDriveDefaultClientSecret, xdriveSettings.secrets[0]];
+                            }
+                            else if (xdriveSettings.secrets.Count == 2)
+                            {
+                                xdriveSettings.secrets = [xdriveSettings.secrets[0], Global.OneDriveDefaultClientSecret, xdriveSettings.secrets[1]];
+                            }
+                        }
+
+                        xdriveSettings.template = GetOneDriveTemplate(xdriveSettings.concurrency.Value);
                     }
 
                     streamSettings.xdriveSettings = xdriveSettings;
@@ -1036,5 +1051,55 @@ public partial class CoreConfigV2rayService
             }
         }
         return null;
+    }
+
+    private static JsonNode? GetOneDriveTemplate(int concurrency)
+    {
+        var json = $$"""
+        {
+          "flatten": true,
+          "concurrency": {{concurrency}},
+          "auth": {
+            "type": "oauth2",
+            "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            "form": {
+              "client_id": "{secret0}",
+              "client_secret": "{secret1}",
+              "refresh_token": "{secret2}",
+              "grant_type": "refresh_token"
+            },
+            "tokenPath": "access_token",
+            "expiryPath": "expires_in",
+            "header": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "put": {
+            "method": "PUT",
+            "url": "https://graph.microsoft.com/v1.0/me/drive/root:/{folder}/{name}:/content",
+            "headers": {
+              "Content-Type": "application/octet-stream"
+            }
+          },
+          "get": {
+            "method": "GET",
+            "url": "https://graph.microsoft.com/v1.0/me/drive/root:/{folder}/{name}:/content"
+          },
+          "delete": {
+            "method": "DELETE",
+            "url": "https://graph.microsoft.com/v1.0/me/drive/root:/{folder}/{name}"
+          },
+          "list": {
+            "method": "GET",
+            "url": "https://graph.microsoft.com/v1.0/me/drive/root:/{folder}:/children?select=name",
+            "namesRegex": "\"name\"\\s*:\\s*\"([^\"]+)\""
+          },
+          "retry": {
+            "status": [429, 500, 502, 503, 504],
+            "rateReason": "error.code"
+          }
+        }
+        """;
+        return JsonUtils.ParseJson(json);
     }
 }

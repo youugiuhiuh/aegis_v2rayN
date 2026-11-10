@@ -475,6 +475,7 @@ public class XdriveSettings4Ray
     public int? maxPollIntervalMs { get; set; }
     public int? eagerWindowMs { get; set; }
     public int? concurrency { get; set; }
+    public JsonNode? template { get; set; }
 }
 
 public class S3Settings4Ray

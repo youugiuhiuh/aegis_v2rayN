@@ -649,7 +649,7 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
                 if (SelectedSource.Address.IsNullOrEmpty()) SelectedSource.Address = "graph.microsoft.com";
                 if (SelectedSource.Port <= 0) SelectedSource.Port = 443;
                 if (XdriveExtra.IsNullOrEmpty())
-                    XdriveExtra = "{\"concurrency\":8,\"flushIntervalMs\":10,\"maxPollIntervalMs\":300,\"pollIntervalMs\":50,\"segmentBytes\":524288,\"eagerWindowMs\":10000}";
+                    XdriveExtra = "{\"concurrency\":4,\"flushIntervalMs\":80,\"maxPollIntervalMs\":1200,\"pollIntervalMs\":200,\"segmentBytes\":65536,\"eagerWindowMs\":2000}";
                 break;
             case "AWS S3 (Global)":
                 XdriveService = "s3";

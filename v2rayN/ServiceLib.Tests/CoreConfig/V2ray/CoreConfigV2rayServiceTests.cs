@@ -1055,11 +1055,62 @@ public class CoreConfigV2rayServiceTests
             .First(outbound => outbound!["tag"]!.GetValue<string>() == Global.ProxyTag)!;
 
         var xdriveSettings = proxy["streamSettings"]!["xdriveSettings"]!;
+        await xdriveSettings["service"]!.GetValue<string>().Should().BeEqualTo("template");
+        await xdriveSettings["template"]!["flatten"]!.GetValue<bool>().Should().BeTrue();
+        await xdriveSettings["template"]!["auth"]!["tokenUrl"]!.GetValue<string>().Should().BeEqualTo("https://login.microsoftonline.com/common/oauth2/v2.0/token");
         await xdriveSettings["segmentBytes"]!.GetValue<int>().Should().BeEqualTo(1048576);
         await xdriveSettings["flushIntervalMs"]!.GetValue<int>().Should().BeEqualTo(500);
         await xdriveSettings["pollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(200);
         await xdriveSettings["maxPollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(2000);
         await xdriveSettings["eagerWindowMs"]!.GetValue<int>().Should().BeEqualTo(1000);
         await xdriveSettings["concurrency"]!.GetValue<int>().Should().BeEqualTo(4);
+    }
+
+    [Test]
+    public async Task GenerateClientConfigContent_WhenXdriveOneDriveWithDefaultParameters_ShouldInjectBalancedTemplateAndSecrets()
+    {
+        var config = CoreConfigTestFactory.CreateConfig(ECoreType.Xray);
+        CoreConfigTestFactory.BindAppManagerConfig(config);
+        var node = new ProfileItem
+        {
+            IndexId = "node-xdrive-onedrive-default",
+            ConfigType = EConfigType.VLESS,
+            CoreType = ECoreType.Xray,
+            Remarks = "xdrive-onedrive-default",
+            Address = "graph.microsoft.com",
+            Port = 443,
+            Password = Guid.NewGuid().ToString(),
+            Network = nameof(ETransport.xdrive),
+        };
+        node.SetProtocolExtra(new ProtocolExtraItem { VlessEncryption = Global.None });
+        node.SetTransportExtra(new TransportExtraItem
+        {
+            XdriveService = "onedrive",
+            XdriveRemoteFolder = "xray_sync",
+            XdriveSecrets = "mock_refresh_token_only",
+        });
+
+        var context = CoreConfigTestFactory.CreateContext(config, node, ECoreType.Xray);
+        var result = new CoreConfigV2rayService(context).GenerateClientConfigContent();
+
+        await result.Success.Should().BeTrue();
+        var generatedConfig = JsonNode.Parse(result.Data!.ToString()!)!;
+        var proxy = generatedConfig["outbounds"]!.AsArray()
+            .First(outbound => outbound!["tag"]!.GetValue<string>() == Global.ProxyTag)!;
+
+        var xdriveSettings = proxy["streamSettings"]!["xdriveSettings"]!;
+        await xdriveSettings["service"]!.GetValue<string>().Should().BeEqualTo("template");
+        await xdriveSettings["segmentBytes"]!.GetValue<int>().Should().BeEqualTo(65536);
+        await xdriveSettings["flushIntervalMs"]!.GetValue<int>().Should().BeEqualTo(80);
+        await xdriveSettings["pollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(200);
+        await xdriveSettings["maxPollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(1200);
+        await xdriveSettings["eagerWindowMs"]!.GetValue<int>().Should().BeEqualTo(2000);
+        await xdriveSettings["concurrency"]!.GetValue<int>().Should().BeEqualTo(4);
+
+        var secrets = xdriveSettings["secrets"]!.AsArray();
+        await secrets.Count.Should().BeEqualTo(3);
+        await secrets[0]!.GetValue<string>().Should().BeEqualTo(Global.OneDriveDefaultClientId);
+        await secrets[1]!.GetValue<string>().Should().BeEqualTo(Global.OneDriveDefaultClientSecret);
+        await secrets[2]!.GetValue<string>().Should().BeEqualTo("mock_refresh_token_only");
     }
 }
