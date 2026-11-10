@@ -19,10 +19,11 @@ public class AddServerViewModelTests
     [Test]
     public async Task XdriveServices_ShouldContainExpectedServices()
     {
-        await Global.XdriveServices.Count.Should().BeEqualTo(3);
+        await Global.XdriveServices.Count.Should().BeEqualTo(4);
         await Global.XdriveServices[0].Should().BeEqualTo("google-drive");
-        await Global.XdriveServices[1].Should().BeEqualTo("s3");
-        await Global.XdriveServices[2].Should().BeEqualTo("local");
+        await Global.XdriveServices[1].Should().BeEqualTo("onedrive");
+        await Global.XdriveServices[2].Should().BeEqualTo("s3");
+        await Global.XdriveServices[3].Should().BeEqualTo("local");
     }
 
     [Test]
@@ -205,6 +206,60 @@ public class AddServerViewModelTests
         await vm.XdriveS3Region.Should().BeEqualTo("auto");
         await vm.XdriveS3PathStyle.Should().BeEqualTo(true);
         await vm.XdriveExtra.Should().BeEqualTo("{\"concurrency\":16,\"flushIntervalMs\":30,\"maxPollIntervalMs\":400,\"segmentBytes\":524288,\"eagerWindowMs\":1500}");
+    }
+
+    [Test]
+    public async Task AddServerViewModel_ApplyXdriveProviderPreset_ShouldConfigureOneDrive()
+    {
+        CoreConfigTestFactory.BindAppManagerConfig(CoreConfigTestFactory.CreateConfig());
+
+        var profile = new ProfileItem
+        {
+            IndexId = "test-node",
+            ConfigType = EConfigType.VLESS,
+            Address = string.Empty,
+            Port = 0,
+            Password = Guid.NewGuid().ToString(),
+            Network = nameof(ETransport.xdrive),
+        };
+        profile.SetTransportExtra(new TransportExtraItem
+        {
+            XdriveService = "s3",
+        });
+
+        var vm = new AddServerViewModel(profile);
+        vm.XdriveProvider = "Microsoft OneDrive";
+
+        await vm.XdriveService.Should().BeEqualTo("onedrive");
+        await vm.SelectedSource.Address.Should().BeEqualTo("graph.microsoft.com");
+        await vm.SelectedSource.Port.Should().BeEqualTo(443);
+        await vm.SelectedSource.Sni.Should().BeEqualTo("graph.microsoft.com");
+        await vm.SelectedSource.Alpn.Should().BeEqualTo("h2");
+        await vm.XdriveExtra.Should().Contain("\"concurrency\":8");
+    }
+
+    [Test]
+    public async Task AddServerViewModel_ShouldResolveOneDriveProviderFromTransportExtra()
+    {
+        CoreConfigTestFactory.BindAppManagerConfig(CoreConfigTestFactory.CreateConfig());
+
+        var profile = new ProfileItem
+        {
+            IndexId = "test-node",
+            ConfigType = EConfigType.VLESS,
+            Address = "graph.microsoft.com",
+            Port = 443,
+            Network = nameof(ETransport.xdrive),
+        };
+        profile.SetTransportExtra(new TransportExtraItem
+        {
+            XdriveService = "onedrive",
+        });
+
+        var vm = new AddServerViewModel(profile);
+
+        await vm.XdriveService.Should().BeEqualTo("onedrive");
+        await vm.XdriveProvider.Should().BeEqualTo("Microsoft OneDrive");
     }
 
     [Test]

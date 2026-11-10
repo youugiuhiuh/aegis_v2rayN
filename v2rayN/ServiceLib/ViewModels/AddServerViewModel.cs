@@ -437,6 +437,10 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
         {
             XdriveProvider = "Google Drive";
         }
+        else if (transport.XdriveService == "onedrive")
+        {
+            XdriveProvider = "Microsoft OneDrive";
+        }
         else if (transport.XdriveS3Endpoint?.Contains("r2.cloudflarestorage.com") == true)
         {
             XdriveProvider = "Cloudflare R2";
@@ -636,6 +640,16 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
                 if (SelectedSource.Alpn.IsNullOrEmpty()) SelectedSource.Alpn = "h2";
                 if (SelectedSource.Address.IsNullOrEmpty()) SelectedSource.Address = "www.google.com";
                 if (SelectedSource.Port <= 0) SelectedSource.Port = 443;
+                break;
+            case "Microsoft OneDrive":
+                XdriveService = "onedrive";
+                SelectedSource.StreamSecurity = Global.StreamSecurity;
+                if (SelectedSource.Sni.IsNullOrEmpty()) SelectedSource.Sni = "graph.microsoft.com";
+                if (SelectedSource.Alpn.IsNullOrEmpty()) SelectedSource.Alpn = "h2";
+                if (SelectedSource.Address.IsNullOrEmpty()) SelectedSource.Address = "graph.microsoft.com";
+                if (SelectedSource.Port <= 0) SelectedSource.Port = 443;
+                if (XdriveExtra.IsNullOrEmpty())
+                    XdriveExtra = "{\"concurrency\":8,\"flushIntervalMs\":10,\"maxPollIntervalMs\":300,\"pollIntervalMs\":50,\"segmentBytes\":524288,\"eagerWindowMs\":10000}";
                 break;
             case "AWS S3 (Global)":
                 XdriveService = "s3";
