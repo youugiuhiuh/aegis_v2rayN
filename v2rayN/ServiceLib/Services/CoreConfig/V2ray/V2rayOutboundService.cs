@@ -574,13 +574,23 @@ public partial class CoreConfigV2rayService
                         xdriveSettings.concurrency ??= 64;
                     }
 
+                    if (transport.XdriveS3Endpoint?.Contains("backblazeb2.com") == true)
+                    {
+                        xdriveSettings.segmentBytes ??= 524288;
+                        xdriveSettings.flushIntervalMs ??= 100;
+                        xdriveSettings.pollIntervalMs ??= 500;
+                        xdriveSettings.maxPollIntervalMs ??= 3000;
+                        xdriveSettings.eagerWindowMs ??= 1500;
+                        xdriveSettings.concurrency ??= 4;
+                    }
+
                     if (string.Equals(transport.XdriveService, "onedrive", StringComparison.OrdinalIgnoreCase))
                     {
                         xdriveSettings.service = "template";
                         xdriveSettings.segmentBytes ??= 65536;
-                        xdriveSettings.flushIntervalMs ??= 80;
-                        xdriveSettings.pollIntervalMs ??= 200;
-                        xdriveSettings.maxPollIntervalMs ??= 1200;
+                        xdriveSettings.flushIntervalMs ??= 30;
+                        xdriveSettings.pollIntervalMs ??= 100;
+                        xdriveSettings.maxPollIntervalMs ??= 1000;
                         xdriveSettings.eagerWindowMs ??= 2000;
                         xdriveSettings.concurrency ??= 4;
 
