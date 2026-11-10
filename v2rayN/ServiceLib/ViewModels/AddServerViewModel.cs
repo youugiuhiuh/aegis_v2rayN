@@ -631,7 +631,7 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
 
                 XdriveS3PathStyle = true;
                 if (XdriveExtra.IsNullOrEmpty())
-                    XdriveExtra = "{\"concurrency\":64,\"flushIntervalMs\":10,\"maxPollIntervalMs\":120,\"segmentBytes\":262144,\"eagerWindowMs\":1000}";
+                    XdriveExtra = "{\"concurrency\":16,\"flushIntervalMs\":30,\"maxPollIntervalMs\":400,\"segmentBytes\":524288,\"eagerWindowMs\":1500}";
                 break;
 
             case "Google Drive":
