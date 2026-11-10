@@ -235,7 +235,8 @@ public class AddServerViewModelTests
         await vm.SelectedSource.Port.Should().BeEqualTo(443);
         await vm.SelectedSource.Sni.Should().BeEqualTo("graph.microsoft.com");
         await vm.SelectedSource.Alpn.Should().BeEqualTo("h2");
-        await vm.XdriveExtra.Should().Contain("\"concurrency\":8");
+        await vm.XdriveExtra.Should().Contain("\"concurrency\":4");
+        await vm.XdriveExtra.Should().Contain("\"segmentBytes\":65536");
     }
 
     [Test]

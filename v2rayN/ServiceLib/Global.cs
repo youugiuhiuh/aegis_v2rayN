@@ -458,6 +458,9 @@ public class Global
 
     public static readonly List<string> XdriveServices = ["google-drive", "onedrive", "s3", "local"];
 
+    public const string OneDriveDefaultClientId = "b15665d9-eda6-4092-8539-0eec376afd59";
+    public const string OneDriveDefaultClientSecret = "qtyfaBBYA403=unZUP40~_#";
+
     public static readonly List<string> XdriveProviders =
     [
         "Cloudflare R2",
