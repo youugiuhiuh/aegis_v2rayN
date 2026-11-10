@@ -156,7 +156,15 @@ jobs:
 
           New-Item -ItemType Directory -Force -Path "tmp" | Out-Null
 
-          Invoke-WebRequest -Uri $xrayUrl -OutFile "tmp/xray.zip"
+          try {
+            Invoke-WebRequest -Uri $xrayUrl -OutFile "tmp/xray.zip"
+          } catch {
+            Write-Host "Warning: $xrayUrl failed, falling back to latest XTLS/Xray-core release"
+            $latestTag = (Invoke-RestMethod -Uri "https://api.github.com/repos/XTLS/Xray-core/releases/latest" -Headers $headers).tag_name
+            $fallbackUrl = "https://github.com/XTLS/Xray-core/releases/download/$latestTag/Xray-windows-32.zip"
+            Write-Host "Fallback Xray: $fallbackUrl"
+            Invoke-WebRequest -Uri $fallbackUrl -OutFile "tmp/xray.zip"
+          }
           Expand-Archive -Force "tmp/xray.zip" "tmp/xray"
 
           Get-ChildItem "tmp/xray" -Recurse -Include "*.exe","*.dll" | ForEach-Object {
