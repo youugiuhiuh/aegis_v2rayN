@@ -239,6 +239,9 @@ public class AddServerViewModelTests
         await vm.SelectedSource.Alpn.Should().BeEqualTo("h2");
         await vm.XdriveExtra.Should().Contain("\"concurrency\":4");
         await vm.XdriveExtra.Should().Contain("\"segmentBytes\":65536");
+        await vm.XdriveExtra.Should().Contain("\"flushIntervalMs\":30");
+        await vm.XdriveExtra.Should().Contain("\"pollIntervalMs\":100");
+        await vm.XdriveExtra.Should().Contain("\"maxPollIntervalMs\":1000");
     }
 
     [Test]
