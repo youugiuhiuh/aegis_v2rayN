@@ -132,6 +132,20 @@ jobs:
         find ${{ env.OUTPUT }} -type f -name '*.sym' -delete
         find ${{ env.OUTPUT }} -name '*.dSYM' -exec rm -rf {} +
 
+    - name: Smoke test v2rayN on Linux (Headless Xvfb)
+      if: inputs.target == 'linux' && matrix.arch == '64' && !inputs.isAot
+      shell: bash
+      run: |
+        sudo apt-get update && sudo apt-get install -y xvfb libfontconfig1
+        echo "Starting v2rayN headless smoke test via xvfb-run..."
+        xvfb-run -a timeout --preserve-status 4 "${{ env.OUTPUT }}/v2rayN" || exit_code=$?
+        if [ "$exit_code" -eq 124 ] || [ "$exit_code" -eq 0 ]; then
+          echo "Smoke test passed: v2rayN started successfully without crashing."
+        else
+          echo "Smoke test failed with exit code: $exit_code"
+          exit 1
+        fi
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v7
       with:
