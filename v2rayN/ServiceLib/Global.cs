@@ -456,12 +456,13 @@ public class Global
         "stream-one"
     ];
 
-    public static readonly List<string> XdriveServices = ["google-drive", "s3", "local"];
+    public static readonly List<string> XdriveServices = ["google-drive", "onedrive", "s3", "local"];
 
     public static readonly List<string> XdriveProviders =
     [
         "Cloudflare R2",
         "Google Drive",
+        "Microsoft OneDrive",
         "AWS S3 (Global)",
         "Oracle Cloud S3",
         "Backblaze B2",
