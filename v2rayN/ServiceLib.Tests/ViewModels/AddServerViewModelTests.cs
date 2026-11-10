@@ -173,10 +173,12 @@ public class AddServerViewModelTests
         await vm.XdriveS3PathStyle.Should().BeEqualTo(true);
 
         vm.XdriveS3Region = string.Empty;
+        vm.XdriveExtra = string.Empty;
         vm.XdriveProvider = "Backblaze B2";
         await vm.XdriveService.Should().BeEqualTo("s3");
         await vm.XdriveS3Region.Should().BeEqualTo("us-west-004");
         await vm.XdriveS3PathStyle.Should().BeEqualTo(false);
+        await vm.XdriveExtra.Should().Contain("\"pollIntervalMs\":500");
     }
 
     [Test]
