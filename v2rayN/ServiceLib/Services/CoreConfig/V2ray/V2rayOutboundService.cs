@@ -577,6 +577,16 @@ public partial class CoreConfigV2rayService
                         xdriveSettings.concurrency ??= 64;
                     }
 
+                    if (string.Equals(transport.XdriveService, "onedrive", StringComparison.OrdinalIgnoreCase))
+                    {
+                        xdriveSettings.segmentBytes ??= 524288;
+                        xdriveSettings.flushIntervalMs ??= 10;
+                        xdriveSettings.pollIntervalMs ??= 50;
+                        xdriveSettings.maxPollIntervalMs ??= 300;
+                        xdriveSettings.eagerWindowMs ??= 10000;
+                        xdriveSettings.concurrency ??= 8;
+                    }
+
                     streamSettings.xdriveSettings = xdriveSettings;
                     FillOutboundMux(outbound, true, true);
                     break;
