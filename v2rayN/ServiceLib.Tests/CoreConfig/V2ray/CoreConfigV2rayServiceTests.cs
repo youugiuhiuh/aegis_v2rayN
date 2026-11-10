@@ -1026,9 +1026,9 @@ public class CoreConfigV2rayServiceTests
         var xdriveSettings = proxy["streamSettings"]!["xdriveSettings"]!;
         await xdriveSettings["service"]!.GetValue<string>().Should().BeEqualTo("template");
         await xdriveSettings["segmentBytes"]!.GetValue<int>().Should().BeEqualTo(65536);
-        await xdriveSettings["flushIntervalMs"]!.GetValue<int>().Should().BeEqualTo(80);
-        await xdriveSettings["pollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(200);
-        await xdriveSettings["maxPollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(1200);
+        await xdriveSettings["flushIntervalMs"]!.GetValue<int>().Should().BeEqualTo(30);
+        await xdriveSettings["pollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(100);
+        await xdriveSettings["maxPollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(1000);
         await xdriveSettings["eagerWindowMs"]!.GetValue<int>().Should().BeEqualTo(2000);
         await xdriveSettings["concurrency"]!.GetValue<int>().Should().BeEqualTo(4);
 
@@ -1037,5 +1037,48 @@ public class CoreConfigV2rayServiceTests
         await secrets[0]!.GetValue<string>().Should().BeEqualTo(Global.OneDriveDefaultClientId);
         await secrets[1]!.GetValue<string>().Should().BeEqualTo(Global.OneDriveDefaultClientSecret);
         await secrets[2]!.GetValue<string>().Should().BeEqualTo("mock_refresh_token_only");
+    }
+
+    [Test]
+    public async Task GenerateClientConfigContent_WhenXdriveBackblazeB2_ShouldInjectOption2Parameters()
+    {
+        var config = CoreConfigTestFactory.CreateConfig(ECoreType.Xray);
+        CoreConfigTestFactory.BindAppManagerConfig(config);
+        var node = new ProfileItem
+        {
+            IndexId = "node-xdrive-b2-option2",
+            ConfigType = EConfigType.VLESS,
+            CoreType = ECoreType.Xray,
+            Remarks = "xdrive-b2-option2",
+            Address = "s3.us-east-005.backblazeb2.com",
+            Port = 443,
+            Password = Guid.NewGuid().ToString(),
+            Network = nameof(ETransport.xdrive),
+        };
+        node.SetProtocolExtra(new ProtocolExtraItem { VlessEncryption = Global.None });
+        node.SetTransportExtra(new TransportExtraItem
+        {
+            XdriveService = "s3",
+            XdriveS3Endpoint = "https://s3.us-east-005.backblazeb2.com",
+            XdriveS3Bucket = "1testYosh",
+            XdriveRemoteFolder = "aegis-xdrive",
+            XdriveSecrets = "key_id,app_key",
+        });
+
+        var context = CoreConfigTestFactory.CreateContext(config, node, ECoreType.Xray);
+        var result = new CoreConfigV2rayService(context).GenerateClientConfigContent();
+
+        await result.Success.Should().BeTrue();
+        var generatedConfig = JsonNode.Parse(result.Data!.ToString()!)!;
+        var proxy = generatedConfig["outbounds"]!.AsArray()
+            .First(outbound => outbound!["tag"]!.GetValue<string>() == Global.ProxyTag)!;
+
+        var xdriveSettings = proxy["streamSettings"]!["xdriveSettings"]!;
+        await xdriveSettings["segmentBytes"]!.GetValue<int>().Should().BeEqualTo(524288);
+        await xdriveSettings["flushIntervalMs"]!.GetValue<int>().Should().BeEqualTo(100);
+        await xdriveSettings["pollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(500);
+        await xdriveSettings["maxPollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(3000);
+        await xdriveSettings["eagerWindowMs"]!.GetValue<int>().Should().BeEqualTo(1500);
+        await xdriveSettings["concurrency"]!.GetValue<int>().Should().BeEqualTo(4);
     }
 }
