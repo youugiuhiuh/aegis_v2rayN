@@ -207,7 +207,7 @@ public class AddServerViewModelTests
         await vm.XdriveService.Should().BeEqualTo("s3");
         await vm.XdriveS3Region.Should().BeEqualTo("auto");
         await vm.XdriveS3PathStyle.Should().BeEqualTo(true);
-        await vm.XdriveExtra.Should().BeEqualTo("{\"concurrency\":16,\"flushIntervalMs\":30,\"maxPollIntervalMs\":400,\"segmentBytes\":524288,\"eagerWindowMs\":1500}");
+        await vm.XdriveExtra.Should().BeEqualTo("{\"concurrency\":16,\"flushIntervalMs\":30,\"maxPollIntervalMs\":4000,\"pollIntervalMs\":50,\"segmentBytes\":524288,\"eagerWindowMs\":3000}");
     }
 
     [Test]
@@ -265,6 +265,30 @@ public class AddServerViewModelTests
         await vm.XdriveS3PathStyle.Should().BeEqualTo(true);
         await vm.XdriveExtra.Should().Contain("\"concurrency\":16");
         await vm.XdriveExtra.Should().Contain("\"pollIntervalMs\":40");
+    }
+
+    [Test]
+    public async Task AddServerViewModel_ApplyXdriveProviderPreset_ShouldConfigureCloudflareR2()
+    {
+        CoreConfigTestFactory.BindAppManagerConfig(CoreConfigTestFactory.CreateConfig());
+
+        var profile = new ProfileItem
+        {
+            IndexId = "test-node",
+            ConfigType = EConfigType.VLESS,
+            Network = nameof(ETransport.xdrive),
+        };
+
+        var vm = new AddServerViewModel(profile);
+        vm.XdriveProvider = "Cloudflare R2";
+
+        await vm.XdriveService.Should().BeEqualTo("s3");
+        await vm.XdriveS3Region.Should().BeEqualTo("auto");
+        await vm.XdriveS3PathStyle.Should().BeEqualTo(true);
+        await vm.XdriveExtra.Should().Contain("\"concurrency\":16");
+        await vm.XdriveExtra.Should().Contain("\"pollIntervalMs\":50");
+        await vm.XdriveExtra.Should().Contain("\"maxPollIntervalMs\":4000");
+        await vm.XdriveExtra.Should().Contain("\"eagerWindowMs\":3000");
     }
 
     [Test]
