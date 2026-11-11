@@ -1100,12 +1100,13 @@ public class CoreConfigV2rayServiceTests
 
         var xdriveSettings = proxy["streamSettings"]!["xdriveSettings"]!;
         await xdriveSettings["service"]!.GetValue<string>().Should().BeEqualTo("template");
-        await xdriveSettings["segmentBytes"]!.GetValue<int>().Should().BeEqualTo(65536);
-        await xdriveSettings["flushIntervalMs"]!.GetValue<int>().Should().BeEqualTo(30);
-        await xdriveSettings["pollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(100);
-        await xdriveSettings["maxPollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(1000);
-        await xdriveSettings["eagerWindowMs"]!.GetValue<int>().Should().BeEqualTo(2000);
-        await xdriveSettings["concurrency"]!.GetValue<int>().Should().BeEqualTo(4);
+        await xdriveSettings["segmentBytes"]!.GetValue<int>().Should().BeEqualTo(1048576);
+        await xdriveSettings["flushIntervalMs"]!.GetValue<int>().Should().BeEqualTo(100);
+        await xdriveSettings["pollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(1500);
+        await xdriveSettings["maxPollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(15000);
+        await xdriveSettings["eagerWindowMs"]!.GetValue<int>().Should().BeEqualTo(5000);
+        await xdriveSettings["concurrency"]!.GetValue<int>().Should().BeEqualTo(2);
+        await xdriveSettings["holeTimeoutMs"]!.GetValue<int>().Should().BeEqualTo(60000);
 
         var secrets = xdriveSettings["secrets"]!.AsArray();
         await secrets.Count.Should().BeEqualTo(3);

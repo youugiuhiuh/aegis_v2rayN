@@ -597,12 +597,13 @@ public partial class CoreConfigV2rayService
                     if (string.Equals(transport.XdriveService, "onedrive", StringComparison.OrdinalIgnoreCase))
                     {
                         xdriveSettings.service = "template";
-                        xdriveSettings.segmentBytes ??= 65536;
-                        xdriveSettings.flushIntervalMs ??= 30;
-                        xdriveSettings.pollIntervalMs ??= 100;
-                        xdriveSettings.maxPollIntervalMs ??= 1000;
-                        xdriveSettings.eagerWindowMs ??= 2000;
-                        xdriveSettings.concurrency ??= 4;
+                        xdriveSettings.segmentBytes ??= 1048576;
+                        xdriveSettings.flushIntervalMs ??= 100;
+                        xdriveSettings.pollIntervalMs ??= 1500;
+                        xdriveSettings.maxPollIntervalMs ??= 15000;
+                        xdriveSettings.eagerWindowMs ??= 5000;
+                        xdriveSettings.concurrency ??= 2;
+                        xdriveSettings.holeTimeoutMs ??= 60000;
 
                         if (xdriveSettings.secrets != null)
                         {
