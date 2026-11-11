@@ -1,0 +1,142 @@
+name: Upstream Sync
+
+on:
+  schedule:
+    # Run daily at 20:00 UTC (04:00 AM UTC+8)
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: upstream-sync-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: Sync with upstream/master
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup Remotes & Restore Rerere Cache
+        id: setup
+        run: |
+          set -euo pipefail
+          git remote add upstream https://github.com/2dust/v2rayN.git || true
+          git fetch origin
+          
+          mkdir -p /tmp/rerere-cache
+          if git show origin/rerere-cache:rr-cache.tar.gz > /tmp/rerere-cache/rr-cache.tar.gz 2>/dev/null; then
+            ./scripts/upstream-sync.sh --restore-rerere /tmp/rerere-cache
+          else
+            echo "No existing rerere-cache branch found on origin."
+          fi
+
+      - name: Run Upstream Sync and Rebase
+        id: rebase
+        run: |
+          set -euo pipefail
+          PRE_SYNC_SHA=$(git rev-parse HEAD)
+          echo "PRE_SYNC_SHA=$PRE_SYNC_SHA" >> "$GITHUB_ENV"
+          
+          ./scripts/upstream-sync.sh --sync-rebase upstream master
+          
+          POST_SYNC_SHA=$(git rev-parse HEAD)
+          echo "POST_SYNC_SHA=$POST_SYNC_SHA" >> "$GITHUB_ENV"
+
+      - name: Save & Push Rerere Cache
+        if: success()
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/rerere-cache
+          ./scripts/upstream-sync.sh --save-rerere /tmp/rerere-cache
+
+          if [ -f /tmp/rerere-cache/rr-cache.tar.gz ]; then
+            git fetch origin rerere-cache || true
+            if git show-ref --quiet refs/remotes/origin/rerere-cache; then
+              git worktree add /tmp/wt-rerere origin/rerere-cache
+            else
+              git worktree add --orphan -b rerere-cache /tmp/wt-rerere
+            fi
+
+            cp /tmp/rerere-cache/rr-cache.tar.gz /tmp/wt-rerere/
+            pushd /tmp/wt-rerere
+            git add rr-cache.tar.gz
+            if ! git diff --staged --quiet; then
+              git commit -m "chore(rerere): update rr-cache [skip ci]"
+              git push origin rerere-cache
+              echo "Updated rerere-cache branch successfully."
+            else
+              echo "No changes in rerere cache to commit."
+            fi
+            popd
+            git worktree remove --force /tmp/wt-rerere
+          fi
+
+      - name: Push Rebased Master
+        if: success()
+        run: |
+          set -euo pipefail
+          if [ "$PRE_SYNC_SHA" != "$POST_SYNC_SHA" ]; then
+            echo "HEAD moved from $PRE_SYNC_SHA to $POST_SYNC_SHA. Pushing to origin/master..."
+            git push --force-with-lease origin master
+          else
+            echo "master is already up to date with upstream."
+          fi
+
+      - name: Report Sync Conflict
+        if: failure() && steps.rebase.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          ISSUE_TITLE="[Auto-Sync] Upstream sync conflict detected"
+          EXISTING_ISSUE=$(gh issue list --repo "${{ github.repository }}" --search "$ISSUE_TITLE in:title state:open" --json number -q '.[0].number' || true)
+
+          BODY=$(cat <<EOF
+          ### ⚠️ Upstream Rebase Conflict Alert
+
+          Automated upstream synchronization failed due to code conflicts during \`git rebase upstream/master\`.
+
+          - **Triggered Commit**: \`${{ github.sha }}\`
+          - **Run URL**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          #### How to Resolve:
+          1. Checkout \`master\` locally:
+             \`\`\`bash
+             git fetch upstream master
+             git checkout master
+             git rebase upstream/master
+             \`\`\`
+          2. Resolve the conflicting files and run:
+             \`\`\`bash
+             git add <resolved-files>
+             git rebase --continue
+             \`\`\`
+          3. Push to master (Rerere will remember this resolution for future syncs):
+             \`\`\`bash
+             git push --force-with-lease origin master
+             \`\`\`
+          EOF
+          )
+
+          if [ -n "$EXISTING_ISSUE" ]; then
+            echo "Found existing open conflict issue #$EXISTING_ISSUE. Adding update comment..."
+            gh issue comment "$EXISTING_ISSUE" --repo "${{ github.repository }}" --body "$BODY"
+          else
+            echo "Creating new conflict issue..."
+            gh issue create --repo "${{ github.repository }}" --title "$ISSUE_TITLE" --body "$BODY"
+          fi
