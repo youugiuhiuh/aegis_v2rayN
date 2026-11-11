@@ -464,6 +464,7 @@ public class Global
     public static readonly List<string> XdriveProviders =
     [
         "Cloudflare R2",
+        "4EVERLAND S3",
         "Google Drive",
         "Microsoft OneDrive",
         "AWS S3 (Global)",
