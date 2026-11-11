@@ -39,10 +39,11 @@ jobs:
           git fetch origin
           
           mkdir -p /tmp/rerere-cache
-          if git show origin/rerere-cache:rr-cache.tar.gz > /tmp/rerere-cache/rr-cache.tar.gz 2>/dev/null; then
+          if git show origin/rerere-cache:rr-cache.tar.gz > /tmp/rerere-cache/rr-cache.tar.gz 2>/dev/null && [ -s /tmp/rerere-cache/rr-cache.tar.gz ]; then
             ./scripts/upstream-sync.sh --restore-rerere /tmp/rerere-cache
           else
-            echo "No existing rerere-cache branch found on origin."
+            rm -f /tmp/rerere-cache/rr-cache.tar.gz
+            echo "No existing rerere cache tarball found on origin/rerere-cache."
           fi
 
       - name: Run Upstream Sync and Rebase
@@ -64,7 +65,7 @@ jobs:
           mkdir -p /tmp/rerere-cache
           ./scripts/upstream-sync.sh --save-rerere /tmp/rerere-cache
 
-          if [ -f /tmp/rerere-cache/rr-cache.tar.gz ]; then
+          if [ -s /tmp/rerere-cache/rr-cache.tar.gz ]; then
             git fetch origin rerere-cache || true
             if git show-ref --quiet refs/remotes/origin/rerere-cache; then
               git worktree add /tmp/wt-rerere origin/rerere-cache
@@ -77,13 +78,15 @@ jobs:
             git add rr-cache.tar.gz
             if ! git diff --staged --quiet; then
               git commit -m "chore(rerere): update rr-cache [skip ci]"
-              git push origin rerere-cache
+              git push origin HEAD:refs/heads/rerere-cache
               echo "Updated rerere-cache branch successfully."
             else
               echo "No changes in rerere cache to commit."
             fi
             popd
             git worktree remove --force /tmp/wt-rerere
+          else
+            echo "No rerere cache tarball generated; skipping rerere push."
           fi
 
       - name: Push Rebased Master
