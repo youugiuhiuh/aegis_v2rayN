@@ -237,11 +237,34 @@ public class AddServerViewModelTests
         await vm.SelectedSource.Port.Should().BeEqualTo(443);
         await vm.SelectedSource.Sni.Should().BeEqualTo("graph.microsoft.com");
         await vm.SelectedSource.Alpn.Should().BeEqualTo("h2");
-        await vm.XdriveExtra.Should().Contain("\"concurrency\":4");
-        await vm.XdriveExtra.Should().Contain("\"segmentBytes\":65536");
-        await vm.XdriveExtra.Should().Contain("\"flushIntervalMs\":30");
-        await vm.XdriveExtra.Should().Contain("\"pollIntervalMs\":100");
-        await vm.XdriveExtra.Should().Contain("\"maxPollIntervalMs\":1000");
+        await vm.XdriveExtra.Should().Contain("\"concurrency\":2");
+        await vm.XdriveExtra.Should().Contain("\"segmentBytes\":1048576");
+        await vm.XdriveExtra.Should().Contain("\"flushIntervalMs\":100");
+        await vm.XdriveExtra.Should().Contain("\"pollIntervalMs\":1500");
+        await vm.XdriveExtra.Should().Contain("\"maxPollIntervalMs\":15000");
+    }
+
+    [Test]
+    public async Task AddServerViewModel_ApplyXdriveProviderPreset_ShouldConfigure4Everland()
+    {
+        CoreConfigTestFactory.BindAppManagerConfig(CoreConfigTestFactory.CreateConfig());
+
+        var profile = new ProfileItem
+        {
+            IndexId = "test-node",
+            ConfigType = EConfigType.VLESS,
+            Network = nameof(ETransport.xdrive),
+        };
+
+        var vm = new AddServerViewModel(profile);
+        vm.XdriveProvider = "4EVERLAND S3";
+
+        await vm.XdriveService.Should().BeEqualTo("s3");
+        await vm.XdriveS3Endpoint.Should().BeEqualTo("https://endpoint.4everland.co");
+        await vm.XdriveS3Region.Should().BeEqualTo("us-east-1");
+        await vm.XdriveS3PathStyle.Should().BeEqualTo(true);
+        await vm.XdriveExtra.Should().Contain("\"concurrency\":16");
+        await vm.XdriveExtra.Should().Contain("\"pollIntervalMs\":40");
     }
 
     [Test]
