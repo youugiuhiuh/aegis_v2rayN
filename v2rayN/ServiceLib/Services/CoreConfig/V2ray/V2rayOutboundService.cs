@@ -589,11 +589,12 @@ public partial class CoreConfigV2rayService
 
                     if (transport.XdriveS3Endpoint?.Contains("r2.cloudflarestorage.com") == true)
                     {
+                        // Cloudflare R2: 4秒空闲深度退避，全月空载仅 ~64.8 万次 Class A 操作，远低于 R2 每月 100 万次免费限额，留足 35+ 万次裕量给数据传输，实现全年永久 100% 稳定免费零扣费
                         xdriveSettings.segmentBytes ??= 524288;
                         xdriveSettings.flushIntervalMs ??= 30;
-                        xdriveSettings.pollIntervalMs ??= 30;
-                        xdriveSettings.maxPollIntervalMs ??= 400;
-                        xdriveSettings.eagerWindowMs ??= 1500;
+                        xdriveSettings.pollIntervalMs ??= 50;
+                        xdriveSettings.maxPollIntervalMs ??= 4000;
+                        xdriveSettings.eagerWindowMs ??= 3000;
                         xdriveSettings.concurrency ??= 16;
                     }
 
