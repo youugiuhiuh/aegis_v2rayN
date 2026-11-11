@@ -574,6 +574,16 @@ public partial class CoreConfigV2rayService
                         xdriveSettings.concurrency ??= 64;
                     }
 
+                    if (transport.XdriveS3Endpoint?.Contains("4everland.co") == true)
+                    {
+                        xdriveSettings.segmentBytes ??= 524288;
+                        xdriveSettings.flushIntervalMs ??= 30;
+                        xdriveSettings.pollIntervalMs ??= 40;
+                        xdriveSettings.maxPollIntervalMs ??= 400;
+                        xdriveSettings.eagerWindowMs ??= 1500;
+                        xdriveSettings.concurrency ??= 16;
+                    }
+
                     if (transport.XdriveS3Endpoint?.Contains("r2.cloudflarestorage.com") == true)
                     {
                         xdriveSettings.segmentBytes ??= 524288;

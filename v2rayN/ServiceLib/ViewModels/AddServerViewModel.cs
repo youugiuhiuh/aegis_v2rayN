@@ -441,6 +441,10 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
         {
             XdriveProvider = "Microsoft OneDrive";
         }
+        else if (transport.XdriveS3Endpoint?.Contains("4everland.co") == true)
+        {
+            XdriveProvider = "4EVERLAND S3";
+        }
         else if (transport.XdriveS3Endpoint?.Contains("r2.cloudflarestorage.com") == true)
         {
             XdriveProvider = "Cloudflare R2";
@@ -633,6 +637,16 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
                 if (XdriveExtra.IsNullOrEmpty())
                     XdriveExtra = "{\"concurrency\":16,\"flushIntervalMs\":30,\"maxPollIntervalMs\":400,\"segmentBytes\":524288,\"eagerWindowMs\":1500}";
                 break;
+            case "4EVERLAND S3":
+                XdriveService = "s3";
+                if (XdriveS3Endpoint.IsNullOrEmpty() || XdriveS3Endpoint.Contains("r2.cloudflarestorage.com"))
+                    XdriveS3Endpoint = "https://endpoint.4everland.co";
+                if (XdriveS3Region.IsNullOrEmpty() || XdriveS3Region == "auto")
+                    XdriveS3Region = "us-east-1";
+                XdriveS3PathStyle = true;
+                if (XdriveExtra.IsNullOrEmpty() || !XdriveExtra.Contains("\"pollIntervalMs\":40"))
+                    XdriveExtra = "{\"concurrency\":16,\"flushIntervalMs\":30,\"maxPollIntervalMs\":400,\"pollIntervalMs\":40,\"segmentBytes\":524288,\"eagerWindowMs\":1500}";
+                break;
             case "Google Drive":
                 XdriveService = "google-drive";
                 SelectedSource.StreamSecurity = Global.StreamSecurity;
@@ -649,7 +663,7 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
                 if (SelectedSource.Address.IsNullOrEmpty()) SelectedSource.Address = "graph.microsoft.com";
                 if (SelectedSource.Port <= 0) SelectedSource.Port = 443;
                 if (XdriveExtra.IsNullOrEmpty())
-                    XdriveExtra = "{\"concurrency\":4,\"flushIntervalMs\":30,\"maxPollIntervalMs\":1000,\"pollIntervalMs\":100,\"segmentBytes\":65536,\"eagerWindowMs\":2000}";
+                    XdriveExtra = "{\"concurrency\":2,\"flushIntervalMs\":100,\"maxPollIntervalMs\":15000,\"pollIntervalMs\":1500,\"segmentBytes\":1048576,\"eagerWindowMs\":5000,\"holeTimeoutMs\":60000}";
                 break;
             case "AWS S3 (Global)":
                 XdriveService = "s3";
