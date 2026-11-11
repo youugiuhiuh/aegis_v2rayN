@@ -6,6 +6,10 @@ on:
       release_tag:
         required: true
         type: string
+      prerelease:
+        required: false
+        type: boolean
+        default: false
     secrets:
       GPG_PRIVATE_KEY:
         required: true
@@ -14,6 +18,10 @@ on:
       release_tag:
         required: true
         type: string
+      prerelease:
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -45,5 +53,5 @@ jobs:
       with:
         file: aegis_v2rayN-public-key.asc
         tag: ${{ inputs.release_tag }}
-        prerelease: true
+        prerelease: ${{ inputs.prerelease }}
         overwrite: true
