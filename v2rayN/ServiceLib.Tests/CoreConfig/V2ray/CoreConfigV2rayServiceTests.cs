@@ -1126,4 +1126,48 @@ public class CoreConfigV2rayServiceTests
         await xdriveSettings["eagerWindowMs"]!.GetValue<int>().Should().BeEqualTo(1500);
         await xdriveSettings["concurrency"]!.GetValue<int>().Should().BeEqualTo(16);
     }
+
+    [Test]
+    public async Task GenerateClientConfigContent_WhenXdriveCloudflareR2_ShouldInjectTunedParameters()
+    {
+        var config = CoreConfigTestFactory.CreateConfig(ECoreType.Xray);
+        CoreConfigTestFactory.BindAppManagerConfig(config);
+        var node = new ProfileItem
+        {
+            IndexId = "node-xdrive-r2",
+            ConfigType = EConfigType.VLESS,
+            CoreType = ECoreType.Xray,
+            Remarks = "xdrive-r2",
+            Address = "127.0.0.1",
+            Port = 42831,
+            Password = Guid.NewGuid().ToString(),
+            Network = nameof(ETransport.xdrive),
+        };
+        node.SetProtocolExtra(new ProtocolExtraItem { VlessEncryption = Global.None });
+        node.SetTransportExtra(new TransportExtraItem
+        {
+            XdriveService = "s3",
+            XdriveS3Endpoint = "https://a5be0a9d14aa44e51692d81782d83fe6.r2.cloudflarestorage.com",
+            XdriveS3Bucket = "my2",
+            XdriveRemoteFolder = "aegis-xdrive",
+            XdriveSecrets = "test_ak,test_sk",
+        });
+
+        var context = CoreConfigTestFactory.CreateContext(config, node, ECoreType.Xray);
+        var result = new CoreConfigV2rayService(context).GenerateClientConfigContent();
+
+        await result.Success.Should().BeTrue();
+        var generatedConfig = JsonNode.Parse(result.Data!.ToString()!)!;
+        var proxy = generatedConfig["outbounds"]!.AsArray()
+            .First(outbound => outbound!["tag"]!.GetValue<string>() == Global.ProxyTag)!;
+
+        var xdriveSettings = proxy["streamSettings"]!["xdriveSettings"]!;
+        await xdriveSettings["service"]!.GetValue<string>().Should().BeEqualTo("s3");
+        await xdriveSettings["segmentBytes"]!.GetValue<int>().Should().BeEqualTo(524288);
+        await xdriveSettings["flushIntervalMs"]!.GetValue<int>().Should().BeEqualTo(30);
+        await xdriveSettings["pollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(50);
+        await xdriveSettings["maxPollIntervalMs"]!.GetValue<int>().Should().BeEqualTo(4000);
+        await xdriveSettings["eagerWindowMs"]!.GetValue<int>().Should().BeEqualTo(3000);
+        await xdriveSettings["concurrency"]!.GetValue<int>().Should().BeEqualTo(16);
+    }
 }

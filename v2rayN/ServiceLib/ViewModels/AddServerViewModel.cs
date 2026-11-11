@@ -634,8 +634,12 @@ public partial class AddServerViewModel : MyReactiveObject, ICloseable
                 XdriveService = "s3";
                 if (XdriveS3Region.IsNullOrEmpty()) XdriveS3Region = "auto";
                 XdriveS3PathStyle = true;
-                if (XdriveExtra.IsNullOrEmpty())
-                    XdriveExtra = "{\"concurrency\":16,\"flushIntervalMs\":30,\"maxPollIntervalMs\":400,\"segmentBytes\":524288,\"eagerWindowMs\":1500}";
+                // Cloudflare R2 黄金平衡参数：
+                // maxPollIntervalMs: 4000 (4秒空闲深度退避，全月空载仅 ~64.8 万次 Class A 操作，远低于 R2 每月 100 万次免费限额，留足 35+ 万次裕量给数据传输，实现全年永久 100% 稳定免费零扣费)
+                // pollIntervalMs: 50 (连接活跃期 50ms 灵敏轮询，匹配 Anycast 边缘网络延迟)
+                // eagerWindowMs: 3000 (3秒积极突发窗口，一旦唤醒即刻全速传输)
+                if (XdriveExtra.IsNullOrEmpty() || XdriveExtra.Contains("\"maxPollIntervalMs\":400,"))
+                    XdriveExtra = "{\"concurrency\":16,\"flushIntervalMs\":30,\"maxPollIntervalMs\":4000,\"pollIntervalMs\":50,\"segmentBytes\":524288,\"eagerWindowMs\":3000}";
                 break;
             case "4EVERLAND S3":
                 XdriveService = "s3";
