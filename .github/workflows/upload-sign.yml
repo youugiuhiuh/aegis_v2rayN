@@ -17,6 +17,10 @@ on:
         required: false
         type: string
         default: application/octet-stream
+      prerelease:
+        required: false
+        type: boolean
+        default: false
     secrets:
       GPG_PRIVATE_KEY:
         required: true
@@ -63,7 +67,7 @@ jobs:
         file: dist/${{ inputs.file_pattern }}
         tag: ${{ inputs.release_tag }}
         file_glob: true
-        prerelease: true
+        prerelease: ${{ inputs.prerelease }}
         overwrite: true
 
     - name: Upload release signatures
@@ -72,5 +76,5 @@ jobs:
         file: dist/${{ inputs.file_pattern }}.sig
         tag: ${{ inputs.release_tag }}
         file_glob: true
-        prerelease: true
+        prerelease: ${{ inputs.prerelease }}
         overwrite: true
