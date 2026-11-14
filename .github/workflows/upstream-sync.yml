@@ -23,6 +23,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: master
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -95,7 +96,7 @@ jobs:
           set -euo pipefail
           if [ "$PRE_SYNC_SHA" != "$POST_SYNC_SHA" ]; then
             echo "HEAD moved from $PRE_SYNC_SHA to $POST_SYNC_SHA. Pushing to origin/master..."
-            git push --force-with-lease origin master
+            git push --force-with-lease origin HEAD:refs/heads/master
           else
             echo "master is already up to date with upstream."
           fi
