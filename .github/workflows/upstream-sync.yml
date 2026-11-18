@@ -106,9 +106,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           ISSUE_TITLE="[Auto-Sync] Upstream sync conflict detected"
-          EXISTING_ISSUE=$(gh issue list --repo "${{ github.repository }}" --search "$ISSUE_TITLE in:title state:open" --json number -q '.[0].number' || true)
 
           BODY=$(cat <<EOF
           ### ⚠️ Upstream Rebase Conflict Alert
@@ -137,10 +136,18 @@ jobs:
           EOF
           )
 
+          # Issues may be disabled on the repository; never fail the job over the report itself.
+          if ! gh issue list --repo "${{ github.repository }}" --limit 1 >/dev/null 2>&1; then
+            echo "::warning::Issues are disabled on this repository; conflict report follows in the log."
+            printf '%s\n' "$BODY"
+            exit 0
+          fi
+
+          EXISTING_ISSUE=$(gh issue list --repo "${{ github.repository }}" --search "$ISSUE_TITLE in:title state:open" --json number -q '.[0].number' 2>/dev/null || true)
           if [ -n "$EXISTING_ISSUE" ]; then
             echo "Found existing open conflict issue #$EXISTING_ISSUE. Adding update comment..."
-            gh issue comment "$EXISTING_ISSUE" --repo "${{ github.repository }}" --body "$BODY"
+            gh issue comment "$EXISTING_ISSUE" --repo "${{ github.repository }}" --body "$BODY" || printf '%s\n' "$BODY"
           else
             echo "Creating new conflict issue..."
-            gh issue create --repo "${{ github.repository }}" --title "$ISSUE_TITLE" --body "$BODY"
+            gh issue create --repo "${{ github.repository }}" --title "$ISSUE_TITLE" --body "$BODY" || printf '%s\n' "$BODY"
           fi
