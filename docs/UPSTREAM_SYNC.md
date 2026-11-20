@@ -66,6 +66,30 @@
 
 ---
 
+## 工作流文件（`.github/workflows/*`）的推送权限
+
+`GITHUB_TOKEN` 是 GitHub App 安装令牌，它的 `permissions` 里没有也无法申请 `workflows` 权限。
+因此任何会创建或修改 `.github/workflows/*` 的推送都会被服务端拒绝：
+
+```
+! [remote rejected] HEAD -> master (refusing to allow a GitHub App to create or update
+  workflow `.github/workflows/build-all.yml` without `workflows` permission)
+```
+
+同步任务的默认行为（未配置 `SYNC_TOKEN`）：
+
+1. 变基完成后，把 `.github/workflows/` 整个目录恢复为同步前的版本，并生成提交
+   `chore(sync): keep fork workflow files`；
+2. 于是推送只包含代码变更，本仓库自定义的 CI 定义保持不变。
+
+如果需要连同上游的工作流文件一起同步：
+
+1. 创建一个带 `workflow` scope 的 classic PAT（或细粒度 token 勾选 **Workflows: Read and write**）；
+2. 保存为仓库 secret `SYNC_TOKEN`；
+3. 工作流会用它完成 checkout 与推送，并跳过上面的「恢复工作流文件」步骤。
+
+---
+
 ## 本地脚本工具使用
 
 脚本路径：`scripts/upstream-sync.sh`
