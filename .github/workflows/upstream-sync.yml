@@ -19,13 +19,20 @@ jobs:
     name: Sync with upstream/master
     runs-on: ubuntu-latest
 
+    env:
+      # Optional PAT (classic `workflow` scope, or fine-grained Workflows: Read and write).
+      # GITHUB_TOKEN can never be granted the `workflows` permission, so any push that
+      # creates or updates .github/workflows/* is rejected with it. Set SYNC_TOKEN to
+      # sync upstream workflow changes too; leave it unset to keep the fork's workflows.
+      SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: master
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Configure Git identity
         run: |
@@ -58,6 +65,26 @@ jobs:
           
           POST_SYNC_SHA=$(git rev-parse HEAD)
           echo "POST_SYNC_SHA=$POST_SYNC_SHA" >> "$GITHUB_ENV"
+
+      - name: Preserve fork workflow files
+        if: env.SYNC_TOKEN == ''
+        run: |
+          set -euo pipefail
+          # GITHUB_TOKEN is a GitHub App installation token. GitHub rejects a push that
+          # creates or updates .github/workflows/* unless the token carries the `workflows`
+          # permission, which GITHUB_TOKEN cannot be granted. Restoring the pre-sync copies
+          # keeps the fork's CI definitions and leaves the push with code changes only.
+          git rm -r -q --ignore-unmatch .github/workflows
+          git checkout "$PRE_SYNC_SHA" -- .github/workflows
+
+          if git diff --cached --quiet; then
+            echo "Workflow files already match $PRE_SYNC_SHA."
+          else
+            git commit -q -m "chore(sync): keep fork workflow files"
+            echo "Restored fork workflow files from $PRE_SYNC_SHA."
+          fi
+
+          echo "POST_SYNC_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Save & Push Rerere Cache
         if: success()
@@ -96,43 +123,70 @@ jobs:
           set -euo pipefail
           if [ "$PRE_SYNC_SHA" != "$POST_SYNC_SHA" ]; then
             echo "HEAD moved from $PRE_SYNC_SHA to $POST_SYNC_SHA. Pushing to origin/master..."
-            git push --force-with-lease origin HEAD:refs/heads/master
+            if ! git push --force-with-lease=refs/heads/master:"$PRE_SYNC_SHA" origin HEAD:refs/heads/master; then
+              echo "::error::Push to master was rejected. If the git output above mentions 'workflows permission', add a SYNC_TOKEN secret that carries the workflow scope."
+              exit 1
+            fi
           else
             echo "master is already up to date with upstream."
           fi
 
-      - name: Report Sync Conflict
-        if: failure() && steps.rebase.outcome == 'failure'
+      - name: Report Sync Failure
+        if: failure()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -uo pipefail
-          ISSUE_TITLE="[Auto-Sync] Upstream sync conflict detected"
 
-          BODY=$(cat <<EOF
-          ### ⚠️ Upstream Rebase Conflict Alert
-
-          Automated upstream synchronization failed due to code conflicts during \`git rebase upstream/master\`.
-
-          - **Triggered Commit**: \`${{ github.sha }}\`
-          - **Run URL**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-          #### How to Resolve:
-          1. Checkout \`master\` locally:
-             \`\`\`bash
+          if [ "${{ steps.rebase.outcome }}" = "failure" ]; then
+            ISSUE_TITLE="[Auto-Sync] Upstream sync conflict detected"
+            HEADLINE="Automated upstream sync failed: \`git rebase upstream/master\` stopped on unresolved code conflicts."
+            HOWTO=$(cat <<'EOF'
+          1. Checkout `master` locally:
+             ```bash
              git fetch upstream master
              git checkout master
              git rebase upstream/master
-             \`\`\`
+             ```
           2. Resolve the conflicting files and run:
-             \`\`\`bash
+             ```bash
              git add <resolved-files>
              git rebase --continue
-             \`\`\`
+             ```
           3. Push to master (Rerere will remember this resolution for future syncs):
-             \`\`\`bash
+             ```bash
              git push --force-with-lease origin master
-             \`\`\`
+             ```
+          EOF
+          )
+          else
+            ISSUE_TITLE="[Auto-Sync] Upstream sync push failed"
+            HEADLINE="Automated upstream sync rebased cleanly but the push to \`master\` was rejected."
+            HOWTO=$(cat <<'EOF'
+          The rejection reason is printed in the log of the failed step.
+
+          - `refusing to allow a GitHub App to create or update workflow ...`
+            The push token lacks the `workflows` permission, which `GITHUB_TOKEN` cannot be
+            granted. Leave the `SYNC_TOKEN` secret unset so the workflow keeps the fork's
+            workflow files, or set `SYNC_TOKEN` to a PAT with the `workflow` scope when
+            upstream workflow changes should be synced as well.
+          - `stale info` / `fetch first`
+            `origin/master` moved while the job ran; re-run the workflow.
+          EOF
+          )
+          fi
+
+          BODY=$(cat <<EOF
+          ### ⚠️ Upstream Sync Failure
+
+          $HEADLINE
+
+          - **Triggered Commit**: \`${{ github.sha }}\`
+          - **Sync Range**: \`${PRE_SYNC_SHA:-unknown}\` -> \`${POST_SYNC_SHA:-unknown}\`
+          - **Run URL**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          #### How to Resolve:
+          $HOWTO
           EOF
           )
 
