@@ -110,3 +110,11 @@
   ```bash
   bash tests/test-upstream-sync.sh
   ```
+
+---
+
+## 相关文档
+
+- `docs/PATCH_STACK.md`：补丁堆栈模型、`SYNC_TOKEN` 的取舍、上游重命名时的处理顺序。
+- `scripts/check-ci-contract.py`：同步任务最后一步的路径契约检查，用于在上游重命名工程的当天就报出精确的 `file:line` 与替换候选。
+
