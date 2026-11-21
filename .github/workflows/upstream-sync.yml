@@ -131,6 +131,13 @@ jobs:
             echo "master is already up to date with upstream."
           fi
 
+      - name: Verify CI path contract
+        run: |
+          set -o pipefail
+          # The workflow snapshots above cannot follow upstream renames, so check that
+          # every project path they mention still exists and report the candidates.
+          python3 scripts/check-ci-contract.py --report "$RUNNER_TEMP/ci-contract.md"
+
       - name: Report Sync Failure
         if: failure()
         env:
@@ -138,7 +145,21 @@ jobs:
         run: |
           set -uo pipefail
 
-          if [ "${{ steps.rebase.outcome }}" = "failure" ]; then
+          if [ -f "$RUNNER_TEMP/ci-contract.md" ]; then
+            ISSUE_TITLE="[Auto-Sync] Workflows reference project paths that upstream renamed"
+            HEADLINE="The code sync completed, but the fork's workflow snapshots reference project paths that no longer exist."
+            HOWTO=$(cat <<'EOF'
+          The sync job cannot repair `.github/workflows/*` itself: `GITHUB_TOKEN` has no
+          `workflows` permission, so any workflow change is dropped before the push.
+
+          1. Fix the paths listed below in the affected workflow files.
+          2. Push that commit with an SSH key or a token that may modify workflow files.
+          3. To remove this class of failure for good: create a PAT with the `workflow`
+             scope and store it as the `SYNC_TOKEN` secret. The sync job then pushes
+             upstream's workflow updates itself and skips the snapshot step.
+          EOF
+          )
+          elif [ "${{ steps.rebase.outcome }}" = "failure" ]; then
             ISSUE_TITLE="[Auto-Sync] Upstream sync conflict detected"
             HEADLINE="Automated upstream sync failed: \`git rebase upstream/master\` stopped on unresolved code conflicts."
             HOWTO=$(cat <<'EOF'
@@ -189,6 +210,12 @@ jobs:
           $HOWTO
           EOF
           )
+
+          if [ -f "$RUNNER_TEMP/ci-contract.md" ]; then
+            BODY="${BODY}
+
+          $(cat "$RUNNER_TEMP/ci-contract.md")"
+          fi
 
           # Issues may be disabled on the repository; never fail the job over the report itself.
           if ! gh issue list --repo "${{ github.repository }}" --limit 1 >/dev/null 2>&1; then
